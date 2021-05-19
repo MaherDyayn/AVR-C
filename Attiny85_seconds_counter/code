@@ -1,5 +1,5 @@
 /*----------------------------------------------------------------------------------------------------------------
-This program is based on the Attiny85
+This program is based on the Attiny85_
 -used Attiny85
 -used 74LS48 deocder driver
 -change value of OCR0B to controll switching speed of the display
