@@ -1,0 +1,49 @@
+/*----------------------------------------------------------------------------------------------------------------
+This program is based on the Attiny85
+-used Attiny85
+-used 74LS48 deocder driver
+-change value of OCR0B to controll switching speed of the display
+-change value of OCR0A and count to adjust time between two consecutive numbers
+------------------------------------------------------------------------------------------------------------------
+*/
+#include<avr/io.h>
+#include<avr/interrupt.h>
+int count=0,ones=0,tens=0,sum=0,c=0;
+
+ISR(TIMER0_COMPA_vect)
+{ if(count==3)
+	{ sum++;
+	  ones=sum%10;
+	  tens=(sum-ones)/10;
+	  count=0;
+	  c=0;
+	}
+  else
+   {count++;} 
+}
+ISR(TIMER0_COMPB_vect)
+{if(c%2==0)
+	{PORTB=ones;
+		PORTB|=(1<<PB4);
+	}
+	else
+	{PORTB=tens;
+		PORTB|(0<<PB4);
+	}
+	c++;
+}
+
+int main()
+{ DDRB=0xFF;
+  PORTB=0x00;
+  sei();
+  OCR0A=240;
+  OCR0B=50;
+  TCNT0=0x00;
+  TCCR0A=0x02;
+  TCCR0B=0x05;
+  TIMSK=(1<<OCIE0A)|(1<<OCIE0B);
+  while(1);
+	
+}
+
