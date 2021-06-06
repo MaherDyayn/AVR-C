@@ -1,0 +1,88 @@
+#include <avr/io.h>
+#include <avr/interrupt.h>
+#define F_CPU 8000000UL
+#include <util/delay.h>
+
+void LCD__command(int a);//to send commands to configure LCD
+void LCD__single(char a);//to write single characters on LCD
+void LCD__multiple(char *word);//to write multiple characters on LCD
+void LCD__shiftreg(int b);//to send commands/data through shift register
+
+void LCD__start()
+{ DDRC=0b00000111;
+  DDRD=0b11111111;
+  _delay_ms(20);
+  //below are the sequence of commands needed to configure the LM041l LCD display
+  LCD__command(0x38);
+  LCD__command(0x0E);
+  LCD__command(0x06);
+  LCD__command(0x01);
+  LCD__command(0x80);
+  
+	
+}
+void LCD__command(int a)
+{ 
+  LCD__shiftreg(a);
+  PORTC&=0b11111110;
+  PORTC&=0b11111101;
+  PORTC|=0b00000100;
+  _delay_us(2);
+  PORTC&=0b11111011;
+  _delay_ms(2);
+	
+}
+void LCD__single(char a)
+{ 
+  LCD__shiftreg(a);
+  PORTC|=0b00000001;
+  PORTC&=0b11111101;
+  PORTC|=0b00000100;
+  _delay_us(2);
+  PORTC&=0b11111011;
+  _delay_ms(2);
+}
+void LCD__multiple(char *word)
+{ for(int i=0;word[i]!='\0';i++)
+	 {LCD__single(word[i]);}
+}
+void LCD__shiftreg(int b)
+{ 
+  //send 1-bit of data 
+  //wait 10us then send clock high
+  //wait 10 us and turn both low
+  //wait 10us and turn latch clock high
+  DDRB=0xFF;
+  PORTB=0x00;
+  int k[8],c=0b10000000,d=128;
+  for(int i=7;i>=0;i--)
+     { k[i]=(b & c)/d;
+	   d/=2;
+	   c/=2;
+     }
+  for(int i=7;i>=0;i--)
+     { if(k[i]==1)
+	     PORTB|=(k[i]<<2); //DS
+	   else
+	     PORTB&=(k[i]<<2);
+	   _delay_ms(1);
+	   PORTB|=(1<<0);
+	   _delay_ms(1);
+	   PORTB&=0x00;
+	   _delay_ms(1);	 
+	 }
+	_delay_ms(1);
+	PORTB|=(1<<1);
+}
+int main(void)
+{  
+   LCD__start();
+   //-------------write TEXT you want displayed, following the format below--------------------------
+   LCD__multiple("helloooo");
+   LCD__command(0xC0);
+   LCD__multiple("world");
+   
+    while (1) 
+    {
+    }
+}
